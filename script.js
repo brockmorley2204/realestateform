@@ -8,13 +8,13 @@
     :root{--brand:#0b66ff;--brand2:#6aa5ff;--ink:#182338;--muted:#6b768a;--ok:#2e7d32;--line:rgba(24,35,56,.10)}
     *{box-sizing:border-box}
     html,body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:transparent;color:var(--ink)}
-    .wrap{max-width:640px;margin:44px auto;padding:0 18px}
+    .wrap{max-width:680px;margin:44px auto;padding:0 18px}
     .card{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.45);border-radius:18px;padding:28px 26px 24px;
       backdrop-filter:saturate(1.1) blur(3px);-webkit-backdrop-filter:saturate(1.1) blur(3px);box-shadow:0 24px 60px -30px rgba(24,35,56,.35)}
     .hidden{display:none!important}
     .center{text-align:center}
 
-    /* progress (hidden on step 1) */
+    /* dots + progress (hidden on step 1) */
     .stepper{display:flex;gap:10px;justify-content:center;margin:4px 0 10px;padding:0;list-style:none}
     .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#5f6b85;background:#eef2ff;border:1px solid #d9e4ff}
     .stepper li.active .dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(11,102,255,.35)}
@@ -28,6 +28,12 @@
     label{display:block;margin:10px 0 8px;font-weight:800}
     input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;font-size:15px;background:#fff;transition:border .12s,box-shadow .12s}
     input:focus{outline:none;border-color:#c9d7ff;box-shadow:0 0 0 4px #eaf0ff}
+
+    /* Search-style address bar */
+    .searchwrap{position:relative;margin-top:6px}
+    .searchbar{padding:16px 52px 16px 48px;border-radius:999px;font-size:16px;border:1px solid #dce3f0;background:#fff}
+    .searchicon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.7}
+    .kbd{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#95a0b6;border:1px solid #dbe1ee;border-radius:6px;padding:3px 6px;background:#f7f9ff}
 
     .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
     .choice{display:flex;align-items:center;justify-content:center;text-align:center;padding:14px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;font-weight:800;user-select:none;cursor:pointer;transition:transform .05s,box-shadow .12s,border-color .12s,background .12s}
@@ -55,23 +61,59 @@
       <!-- Progress UI (hidden on step 1) -->
       <div id="controlsWrap">
         <ol class="stepper" id="stepper" aria-label="Form progress">
-          <li class="active"><span class="dot" aria-label="Step 1">1</span></li>
-          <li><span class="dot" aria-label="Step 2">2</span></li>
-          <li><span class="dot" aria-label="Step 3">3</span></li>
-          <li><span class="dot" aria-label="Step 4">4</span></li>
-          <li><span class="dot" aria-label="Step 5">5</span></li>
-          <li><span class="dot" aria-label="Step 6">6</span></li>
+          <li class="active"><span class="dot">1</span></li>
+          <li><span class="dot">2</span></li>
+          <li><span class="dot">3</span></li>
+          <li><span class="dot">4</span></li>
+          <li><span class="dot">5</span></li>
         </ol>
         <div class="progress"><div class="bar" id="bar"></div></div>
       </div>
 
       <form id="funnel" novalidate>
-        <!-- 1. Postcode -->
+        <!-- 1. Address (search-first) -->
         <div class="step active" data-step="1">
-          <label for="postcode">Enter your postcode to be matched with the Best Local Agent</label>
-          <input id="postcode" name="postcode" inputmode="numeric" minlength="4" maxlength="4"
-                 autocomplete="postal-code" placeholder="e.g. 2170" required />
-          <div class="btns"><button type="button" class="next">Next</button></div>
+          <label for="address">Search your property address</label>
+          <div class="searchwrap">
+            <span class="searchicon">🔎</span>
+            <input id="address" name="address" class="searchbar" placeholder="Start typing your address…"
+                   autocomplete="street-address" required />
+            <span class="kbd">Enter</span>
+          </div>
+
+          <!-- Hidden structured fields (auto-filled on selection) -->
+          <input type="hidden" id="addressFull"   name="addressFull" />
+          <input type="hidden" id="placeId"       name="placeId" />
+          <input type="hidden" id="streetNumber"  name="streetNumber" />
+          <input type="hidden" id="route"         name="route" />
+          <input type="hidden" id="locality"      name="locality" />
+          <input type="hidden" id="state"         name="state" />
+          <input type="hidden" id="addrPostcode"  name="addressPostcode" />
+          <input type="hidden" id="lat"           name="lat" />
+          <input type="hidden" id="lng"           name="lng" />
+
+          <div id="addrErr" class="err">Please select an address from the list, or use manual entry.</div>
+          <div class="tiny" style="margin-top:8px">
+            <a href="#" id="manualToggle">Can’t find it? Enter address manually.</a>
+          </div>
+
+          <!-- Manual fallback -->
+          <div id="manualBlock" style="display:none;margin-top:10px">
+            <div style="display:grid;gap:10px;grid-template-columns:1fr">
+              <input id="m_street"  name="m_street"  placeholder="Street address (e.g. 10 Example St)" />
+              <input id="m_suburb"  name="m_suburb"  placeholder="Suburb" />
+              <div style="display:grid;gap:10px;grid-template-columns:2fr 1fr">
+                <input id="m_state"   name="m_state"   placeholder="State (e.g. NSW)" />
+                <input id="m_postcode" name="m_postcode" inputmode="numeric" maxlength="4" placeholder="Postcode" />
+              </div>
+            </div>
+            <div class="tiny">Manual entry accepted if autocomplete isn’t available.</div>
+          </div>
+
+          <div class="btns">
+            <!-- Back hidden on first step; Next only needed for manual mode -->
+            <button type="button" id="addrNext" class="next" style="display:none">Next</button>
+          </div>
         </div>
 
         <!-- 2. Property Type -->
@@ -101,62 +143,24 @@
           <div class="btns" style="margin-top:12px"><button type="button" class="back">Back</button></div>
         </div>
 
-        <!-- 4. Address (Google Places Autocomplete + manual fallback) -->
+        <!-- 4. Phone -->
         <div class="step" data-step="4">
-          <label for="address">Property address</label>
-          <input id="address" name="address" placeholder="Start typing your address…" autocomplete="street-address" required />
-          <div id="addrErr" class="err">Please select an address from the list (or enter it manually below).</div>
-
-          <!-- Hidden structured fields (auto-filled on selection) -->
-          <input type="hidden" id="addressFull"   name="addressFull" />
-          <input type="hidden" id="placeId"       name="placeId" />
-          <input type="hidden" id="streetNumber"  name="streetNumber" />
-          <input type="hidden" id="route"         name="route" />
-          <input type="hidden" id="locality"      name="locality" />
-          <input type="hidden" id="state"         name="state" />
-          <input type="hidden" id="addrPostcode"  name="addressPostcode" />
-          <input type="hidden" id="lat"           name="lat" />
-          <input type="hidden" id="lng"           name="lng" />
-
-          <div class="tiny"><a href="#" id="manualToggle">Can’t find your address? Enter it manually.</a></div>
-
-          <!-- Manual address block -->
-          <div id="manualBlock" style="display:none;margin-top:10px">
-            <div style="display:grid;gap:10px;grid-template-columns:1fr">
-              <input id="m_street"  name="m_street"  placeholder="Street address (e.g. 10 Example St)" />
-              <input id="m_suburb"  name="m_suburb"  placeholder="Suburb" />
-              <div style="display:grid;gap:10px;grid-template-columns:2fr 1fr">
-                <input id="m_state"   name="m_state"   placeholder="State (e.g. NSW)" />
-                <input id="m_postcode" name="m_postcode" inputmode="numeric" maxlength="4" placeholder="Postcode" />
-              </div>
-            </div>
-            <div class="tiny">Manual entry accepted if autocomplete isn’t available.</div>
-          </div>
-
-          <div class="btns">
-            <button type="button" class="back">Back</button>
-            <button type="button" class="next">Next</button>
-          </div>
-        </div>
-
-        <!-- 5. Phone -->
-        <div class="step" data-step="5">
           <label for="phone">Best phone number</label>
           <input id="phone" name="phone" inputmode="tel" maxlength="20" placeholder="e.g. 0400 000 000" required />
           <div class="tiny">We’ll only use this to share your short-list and next steps.</div>
           <div class="btns"><button type="button" class="back">Back</button><button type="button" class="next">Next</button></div>
         </div>
 
-        <!-- 6. Email -->
-        <div class="step" data-step="6">
+        <!-- 5. Email -->
+        <div class="step" data-step="5">
           <label for="email">Email for your results</label>
           <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required />
           <div class="tiny">By continuing, you agree we may contact you about your appraisal. You can opt out anytime.</div>
           <div class="btns"><button type="button" class="back">Back</button><button type="submit" class="submit">See my match</button></div>
         </div>
 
-        <!-- 7. Thank you -->
-        <div class="step" data-step="7">
+        <!-- 6. Thank you -->
+        <div class="step" data-step="6">
           <div class="center" style="padding:10px 2px">
             <h2 style="margin:6px 0 10px">Thank you for completing! 🎉</h2>
             <p style="margin:0 0 10px;color:var(--muted)">We will send you the match very shortly!</p>
@@ -174,11 +178,10 @@
     // ===== CONFIG =====
     const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQW0E9h0gWIN-wX6CDKUQJrjXzkfgA6sTIpqwd3-HisuiiJGXgcgSsUl5HWH8uV48/exec";
     const PROJECT = "agent-matcher-v1";
-    const formSteps = 6;
+    const formSteps = 5; // Address, Type, Price, Phone, Email
 
     // ===== UTIL =====
     const $ = s => document.querySelector(s);
-    function normalizePostcode(v){ return String(v||"").replace(/\D/g,"").slice(0,4); }
     function readParams(){
       const url = new URL(window.location.href);
       const keys = ["gclid","utm_source","utm_medium","utm_campaign","utm_term","utm_content","fbclid","msclkid"];
@@ -195,7 +198,6 @@
         return fresh;
       }catch(_){ return readParams(); }
     })();
-
     const leadId = (()=>{ const k=PROJECT+":leadId"; let id=localStorage.getItem(k);
       if(!id){ id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)); localStorage.setItem(k,id); }
       return id;
@@ -208,40 +210,43 @@
     const statusEl = $("#status");
     const stepperEls = $("#stepper") ? Array.from($("#stepper").children) : [];
     const controlsWrap = $("#controlsWrap");
+    const addrErr = $("#addrErr");
+    const manualToggle = $("#manualToggle");
+    const manualBlock = $("#manualBlock");
+    const addrNextBtn = $("#addrNext");
     let stepIndex = 0;
-
-    // Address autocomplete state
     let addressSelected = false;
     let manualMode = false;
 
-    // manual toggle
-    const manualToggle = $("#manualToggle");
-    const manualBlock = $("#manualBlock");
-    if (manualToggle) {
-      manualToggle.addEventListener("click", (e)=>{
-        e.preventDefault();
-        manualMode = !manualMode;
-        manualBlock.style.display = manualMode ? "block" : "none";
-        if (manualMode) {
-          // clear any previous autocomplete selection
-          addressSelected = false;
-          ["addressFull","placeId","streetNumber","route","locality","state","addrPostcode","lat","lng"].forEach(id=>{ const el=$("#"+id); if(el) el.value=""; });
-          $("#addrErr").style.display = "none";
-        }
-      });
-    }
+    if (manualToggle) manualToggle.addEventListener("click", (e)=>{
+      e.preventDefault();
+      manualMode = !manualMode;
+      manualBlock.style.display = manualMode ? "block" : "none";
+      addrNextBtn.style.display = manualMode ? "inline-block" : "none";
+      addressSelected = false;
+      $("#placeId").value = "";
+      if (addrErr) addrErr.style.display = "none";
+    });
 
-    // sanitize postcode live
-    const pcInput = $("#postcode");
-    if (pcInput) pcInput.addEventListener("input", ()=>{ const n=normalizePostcode(pcInput.value); if(pcInput.value!==n) pcInput.value=n; });
-
-    // clean address selection if user types
+    // If user types in the address field, clear selection state
     const addrInput = $("#address");
     if (addrInput) {
       addrInput.addEventListener("input", ()=>{
         addressSelected = false;
         $("#placeId").value = "";
-        $("#addrErr").style.display = "none";
+        if (addrErr) addrErr.style.display = "none";
+      });
+      // Enter key on first step: in manual mode, treat as Next; in autocomplete mode, do nothing (must select)
+      addrInput.addEventListener("keydown",(e)=>{
+        if(e.key==="Enter"){
+          if (manualMode) {
+            e.preventDefault();
+            tryAdvance();
+          } else {
+            // prevent premature submit
+            e.preventDefault();
+          }
+        }
       });
     }
 
@@ -261,7 +266,6 @@
       const data = {};
       inputs.forEach(inp=>{
         let v = (inp.value || "").trim();
-        if(inp.id==="postcode") v = normalizePostcode(v);
         data[inp.name || inp.id] = v;
       });
       return data;
@@ -271,31 +275,27 @@
       const step = steps[stepIndex];
       if (!step) return true;
 
-      // Special validation for address step (index 3)
-      if (stepIndex === 3) {
+      // Step 1: Address rules
+      if (stepIndex === 0) {
         if (manualMode) {
-          const street = $("#m_street").value.trim();
-          const suburb = $("#m_suburb").value.trim();
-          const state  = $("#m_state").value.trim();
-          const pc     = $("#m_postcode").value.trim();
+          const street = ($("#m_street").value||"").trim();
+          const suburb = ($("#m_suburb").value||"").trim();
+          const state  = ($("#m_state").value||"").trim();
+          const pc     = ($("#m_postcode").value||"").trim();
           if (!street || !suburb || !state || pc.length !== 4) return false;
-          // Copy manual into "visible" + hidden structured fields so your sheet gets consistent data
+
+          // Copy manual into visible + hidden structured fields
           $("#address").value = `${street}, ${suburb} ${state} ${pc}`;
           $("#addressFull").value = $("#address").value;
-          $("#placeId").value = ""; // none
-          $("#streetNumber").value = ""; // unknown
-          $("#route").value = ""; // unknown
-          $("#locality").value = suburb;
-          $("#state").value = state;
-          $("#addrPostcode").value = pc;
-          $("#lat").value = "";
-          $("#lng").value = "";
-          $("#addrErr").style.display = "none";
+          $("#placeId").value = ""; $("#streetNumber").value=""; $("#route").value="";
+          $("#locality").value = suburb; $("#state").value = state; $("#addrPostcode").value = pc;
+          $("#lat").value = ""; $("#lng").value = "";
+          if (addrErr) addrErr.style.display = "none";
           return true;
         } else {
-          // Autocomplete mode requires a selected place
+          // Must select a suggestion (placeId present)
           if (!addressSelected || !$("#placeId").value) {
-            $("#addrErr").style.display = "block";
+            if (addrErr) addrErr.style.display = "block";
             return false;
           }
         }
@@ -305,14 +305,12 @@
       const inputs = step.querySelectorAll("input[required], select[required]");
       for(const inp of inputs){
         let v = (inp.value || "").trim();
-        if(inp.id==="postcode") v = normalizePostcode(v);
         if(!v) return false;
         if(inp.type==="email"){
           inp.value = v;
           if (typeof inp.checkValidity==="function" && !inp.checkValidity()) return false;
           if (!inp.checkValidity && !/.+@.+\..+/.test(v)) return false;
         }
-        if(inp.id==="postcode" && v.length!==4) return false;
       }
       return true;
     }
@@ -336,15 +334,18 @@
       return payload;
     }
 
-    // Click handlers
+    function tryAdvance(){
+      if(!validForStep()){ if(statusEl){ statusEl.textContent="Please complete this step."; statusEl.classList.remove("saved"); } return; }
+      savePartial("step"); showStep(stepIndex+1);
+    }
+
+    // Click handlers (back/next/choice + manual next)
     form.addEventListener("click",(e)=>{
-      const el = e.target.closest && e.target.closest(".choice, .next, .back, #manualToggle");
+      const el = e.target.closest && e.target.closest(".choice, .next, .back");
       if(!el) return;
       if(el.classList.contains("back")){ showStep(stepIndex-1); return; }
-      if(el.classList.contains("next")){
-        if(!validForStep()){ if(statusEl){ statusEl.textContent="Please complete this step."; statusEl.classList.remove("saved"); } return; }
-        savePartial("step"); showStep(stepIndex+1); return;
-      }
+      if(el.id === "addrNext"){ tryAdvance(); return; }
+      if(el.classList.contains("next")){ tryAdvance(); return; }
       if(el.classList.contains("choice")){
         const group = el.parentElement;
         group.querySelectorAll(".choice").forEach(c=>c.classList.remove("selected"));
@@ -355,29 +356,20 @@
       }
     });
 
-    ["postcode","address","phone","email","m_street","m_suburb","m_state","m_postcode"].forEach(id=>{
-      const x=$("#"+id); if(!x) return;
-      x.addEventListener("keydown",(e)=>{
-        if(e.key==="Enter"){ e.preventDefault();
-          if(!validForStep()){ if(statusEl){ statusEl.textContent="Please complete this step."; statusEl.classList.remove("saved"); } return; }
-          savePartial("step"); showStep(stepIndex+1);
-        }
-      });
-    });
-
+    // Submit (final step)
     form.addEventListener("submit",(e)=>{
       e.preventDefault();
       if(!validForStep()){ if(statusEl){ statusEl.textContent="Please complete this step."; statusEl.classList.remove("saved"); } return; }
       const payload = savePartial("complete");
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event:"lead_complete", leadId: payload.leadId, postcode: payload.answers.postcode || null });
+      window.dataLayer.push({ event:"lead_complete", leadId: payload.leadId, postcode: $("#addrPostcode").value || null });
       showStep(formSteps); // thank-you
     });
 
-    // init
+    // Init UI
     updateUI();
 
-    // ===== EXPOSED init for Google Places =====
+    // ===== Expose Places init =====
     window.initPlaces = function(){
       const input = document.getElementById("address");
       if (!window.google || !google.maps || !google.maps.places || !input) return;
@@ -392,7 +384,7 @@
         const place = ac.getPlace();
         if (!place || !place.address_components) return;
         addressSelected = true;
-        $("#addrErr").style.display = "none";
+        if (addrErr) addrErr.style.display = "none";
 
         // Fill hidden fields
         $("#addressFull").value = place.formatted_address || "";
@@ -402,17 +394,18 @@
 
         // Parse components
         const comps = {};
-        (place.address_components || []).forEach(c=>{
-          c.types.forEach(t=>{ comps[t] = c; });
-        });
+        (place.address_components || []).forEach(c=>c.types.forEach(t=>{ comps[t]=c; }));
         $("#streetNumber").value = (comps.street_number && comps.street_number.long_name) || "";
         $("#route").value        = (comps.route && comps.route.long_name) || "";
         $("#locality").value     = (comps.locality && comps.locality.long_name) || (comps.sublocality && comps.sublocality.long_name) || "";
         $("#state").value        = (comps.administrative_area_level_1 && comps.administrative_area_level_1.short_name) || "";
         $("#addrPostcode").value = (comps.postal_code && comps.postal_code.long_name) || "";
 
-        // Ensure the visible input is the formatted address
+        // Ensure visible input is formatted address
         $("#address").value = $("#addressFull").value;
+
+        // Auto-advance after a short tick (feels snappy)
+        setTimeout(()=>{ savePartial("step"); showStep(1); }, 80);
       });
     };
   })();
