@@ -412,6 +412,7 @@
   </script>
 
   <!-- Google Places (replace YOUR_GOOGLE_MAPS_API_KEY) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initPlaces" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initPlaces" async defer></script>
+&libraries=places&callback=initPlaces" async defer></script>
 </body>
 </html>
