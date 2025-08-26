@@ -14,7 +14,7 @@
     .hidden{display:none!important}
     .center{text-align:center}
 
-    /* dots + progress (hidden on step 1) */
+    /* progress (hidden on step 1) */
     .stepper{display:flex;gap:10px;justify-content:center;margin:4px 0 10px;padding:0;list-style:none}
     .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#5f6b85;background:#eef2ff;border:1px solid #d9e4ff}
     .stepper li.active .dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(11,102,255,.35)}
@@ -34,6 +34,7 @@
     .searchbar{padding:16px 52px 16px 48px;border-radius:999px;font-size:16px;border:1px solid #dce3f0;background:#fff}
     .searchicon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.7}
     .kbd{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#95a0b6;border:1px solid #dbe1ee;border-radius:6px;padding:3px 6px;background:#f7f9ff}
+    .powered{font-size:10px;color:#9aa6bf;margin-top:8px}
 
     .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
     .choice{display:flex;align-items:center;justify-content:center;text-align:center;padding:14px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;font-weight:800;user-select:none;cursor:pointer;transition:transform .05s,box-shadow .12s,border-color .12s,background .12s}
@@ -58,7 +59,7 @@
   <div class="wrap">
     <div class="card">
 
-      <!-- Progress UI (hidden on step 1) -->
+      <!-- stepper/progress (hidden on step 1 for clean hero) -->
       <div id="controlsWrap">
         <ol class="stepper" id="stepper" aria-label="Form progress">
           <li class="active"><span class="dot">1</span></li>
@@ -71,7 +72,7 @@
       </div>
 
       <form id="funnel" novalidate>
-        <!-- 1. Address (search-first) -->
+        <!-- 1) ADDRESS (search-first) -->
         <div class="step active" data-step="1">
           <label for="address">Search your property address</label>
           <div class="searchwrap">
@@ -80,8 +81,9 @@
                    autocomplete="street-address" required />
             <span class="kbd">Enter</span>
           </div>
+          <div class="powered">Powered by Google</div>
 
-          <!-- Hidden structured fields (auto-filled on selection) -->
+          <!-- Hidden structured fields -->
           <input type="hidden" id="addressFull"   name="addressFull" />
           <input type="hidden" id="placeId"       name="placeId" />
           <input type="hidden" id="streetNumber"  name="streetNumber" />
@@ -111,12 +113,12 @@
           </div>
 
           <div class="btns">
-            <!-- Back hidden on first step; Next only needed for manual mode -->
+            <!-- Back hidden on first step; Next only used for manual mode -->
             <button type="button" id="addrNext" class="next" style="display:none">Next</button>
           </div>
         </div>
 
-        <!-- 2. Property Type -->
+        <!-- 2) PROPERTY TYPE -->
         <div class="step" data-step="2">
           <label>Property type</label>
           <input type="hidden" id="ptypeHidden" name="propertyType" required />
@@ -130,7 +132,7 @@
           <div class="btns" style="margin-top:12px"><button type="button" class="back">Back</button></div>
         </div>
 
-        <!-- 3. Price Point -->
+        <!-- 3) PRICE -->
         <div class="step" data-step="3">
           <label>Estimated price point</label>
           <input type="hidden" id="priceBandHidden" name="priceBand" required />
@@ -143,7 +145,7 @@
           <div class="btns" style="margin-top:12px"><button type="button" class="back">Back</button></div>
         </div>
 
-        <!-- 4. Phone -->
+        <!-- 4) PHONE -->
         <div class="step" data-step="4">
           <label for="phone">Best phone number</label>
           <input id="phone" name="phone" inputmode="tel" maxlength="20" placeholder="e.g. 0400 000 000" required />
@@ -151,7 +153,7 @@
           <div class="btns"><button type="button" class="back">Back</button><button type="button" class="next">Next</button></div>
         </div>
 
-        <!-- 5. Email -->
+        <!-- 5) EMAIL -->
         <div class="step" data-step="5">
           <label for="email">Email for your results</label>
           <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required />
@@ -159,7 +161,7 @@
           <div class="btns"><button type="button" class="back">Back</button><button type="submit" class="submit">See my match</button></div>
         </div>
 
-        <!-- 6. Thank you -->
+        <!-- 6) THANK YOU -->
         <div class="step" data-step="6">
           <div class="center" style="padding:10px 2px">
             <h2 style="margin:6px 0 10px">Thank you for completing! 🎉</h2>
@@ -218,38 +220,7 @@
     let addressSelected = false;
     let manualMode = false;
 
-    if (manualToggle) manualToggle.addEventListener("click", (e)=>{
-      e.preventDefault();
-      manualMode = !manualMode;
-      manualBlock.style.display = manualMode ? "block" : "none";
-      addrNextBtn.style.display = manualMode ? "inline-block" : "none";
-      addressSelected = false;
-      $("#placeId").value = "";
-      if (addrErr) addrErr.style.display = "none";
-    });
-
-    // If user types in the address field, clear selection state
-    const addrInput = $("#address");
-    if (addrInput) {
-      addrInput.addEventListener("input", ()=>{
-        addressSelected = false;
-        $("#placeId").value = "";
-        if (addrErr) addrErr.style.display = "none";
-      });
-      // Enter key on first step: in manual mode, treat as Next; in autocomplete mode, do nothing (must select)
-      addrInput.addEventListener("keydown",(e)=>{
-        if(e.key==="Enter"){
-          if (manualMode) {
-            e.preventDefault();
-            tryAdvance();
-          } else {
-            // prevent premature submit
-            e.preventDefault();
-          }
-        }
-      });
-    }
-
+    // UI helpers
     function updateUI(){
       steps.forEach((s,i)=>s.classList.toggle("active", i===stepIndex));
       const pct = Math.min(100, Math.round((Math.min(stepIndex+1, formSteps)/formSteps)*100));
@@ -271,11 +242,11 @@
       return data;
     }
 
+    // Validation (special case for step 1 address)
     function validForStep(){
       const step = steps[stepIndex];
       if (!step) return true;
 
-      // Step 1: Address rules
       if (stepIndex === 0) {
         if (manualMode) {
           const street = ($("#m_street").value||"").trim();
@@ -283,8 +254,7 @@
           const state  = ($("#m_state").value||"").trim();
           const pc     = ($("#m_postcode").value||"").trim();
           if (!street || !suburb || !state || pc.length !== 4) return false;
-
-          // Copy manual into visible + hidden structured fields
+          // Copy manual into visible + structured
           $("#address").value = `${street}, ${suburb} ${state} ${pc}`;
           $("#addressFull").value = $("#address").value;
           $("#placeId").value = ""; $("#streetNumber").value=""; $("#route").value="";
@@ -293,7 +263,6 @@
           if (addrErr) addrErr.style.display = "none";
           return true;
         } else {
-          // Must select a suggestion (placeId present)
           if (!addressSelected || !$("#placeId").value) {
             if (addrErr) addrErr.style.display = "block";
             return false;
@@ -315,6 +284,7 @@
       return true;
     }
 
+    // Save each step to your Apps Script
     function savePartial(eventType){
       const payload = {
         leadId,
@@ -339,7 +309,34 @@
       savePartial("step"); showStep(stepIndex+1);
     }
 
-    // Click handlers (back/next/choice + manual next)
+    // Manual toggle & behavior
+    if (manualToggle) manualToggle.addEventListener("click", (e)=>{
+      e.preventDefault();
+      manualMode = !manualMode;
+      manualBlock.style.display = manualMode ? "block" : "none";
+      addrNextBtn.style.display = manualMode ? "inline-block" : "none";
+      addressSelected = false;
+      $("#placeId").value = "";
+      if (addrErr) addrErr.style.display = "none";
+    });
+
+    // Address input behavior
+    const addrInput = $("#address");
+    if (addrInput) {
+      addrInput.addEventListener("input", ()=>{
+        addressSelected = false;
+        $("#placeId").value = "";
+        if (addrErr) addrErr.style.display = "none";
+      });
+      addrInput.addEventListener("keydown",(e)=>{
+        if(e.key==="Enter"){
+          if (manualMode) { e.preventDefault(); tryAdvance(); }
+          else { e.preventDefault(); /* must pick from suggestions */ }
+        }
+      });
+    }
+
+    // Click handlers
     form.addEventListener("click",(e)=>{
       const el = e.target.closest && e.target.closest(".choice, .next, .back");
       if(!el) return;
@@ -356,7 +353,7 @@
       }
     });
 
-    // Submit (final step)
+    // Submit (final)
     form.addEventListener("submit",(e)=>{
       e.preventDefault();
       if(!validForStep()){ if(statusEl){ statusEl.textContent="Please complete this step."; statusEl.classList.remove("saved"); } return; }
@@ -372,7 +369,10 @@
     // ===== Expose Places init =====
     window.initPlaces = function(){
       const input = document.getElementById("address");
-      if (!window.google || !google.maps || !google.maps.places || !input) return;
+      if (!window.google || !google.maps || !google.maps.places || !input) {
+        if (addrNextBtn) addrNextBtn.style.display = "inline-block"; // allow manual path if Places fails
+        return;
+      }
 
       const ac = new google.maps.places.Autocomplete(input, {
         types: ["address"],
@@ -404,7 +404,7 @@
         // Ensure visible input is formatted address
         $("#address").value = $("#addressFull").value;
 
-        // Auto-advance after a short tick (feels snappy)
+        // Auto-advance
         setTimeout(()=>{ savePartial("step"); showStep(1); }, 80);
       });
     };
@@ -412,7 +412,6 @@
   </script>
 
   <!-- Google Places (replace YOUR_GOOGLE_MAPS_API_KEY) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initPlaces" async defer></script>
-&libraries=places&callback=initPlaces" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initPlaces" async defer></script>
 </body>
 </html>
